@@ -11,7 +11,7 @@ const userSchema = new Schema({
 });
 
 //once schema is created we need to create a model
-const userModel=mongoose.model('User',userSchema); //it will create a collection named users in the database
+const User=mongoose.model('User',userSchema); //it will create a collection named users in the database
 
-module.exports=userModel;
+module.exports=User; //model always starts with capital letter
 //export the model so that it can be used in other files
