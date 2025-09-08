@@ -36,6 +36,23 @@ app.post("/signup", async (req, res) => {
     res.status(500).send("error signing up user" + err.message);
   }
 });
+app.post("/login", async (req, res) => {
+  try{
+
+    const {emailId,password}=req.body;
+    const user=await User.findOne({emailId}); //find the user with the given email id
+    if(!user){
+      return res.status(400).send("invalid credentials");
+    }
+    const isPasswordMatch=await bcrypt.compare(password,user.password); //compare the plain text password with the hashed password
+    if(!isPasswordMatch){
+      return res.status(400).send("invalid credentials");
+    }
+    res.send("user logged in successfully");
+  }catch(err){
+    res.status(500).send("error logging in user" + err.message);
+  }
+});
 //route to get only one user by email id
 app.get("/users", async (req, res) => {
   const userEmail = req.body.emailId;
