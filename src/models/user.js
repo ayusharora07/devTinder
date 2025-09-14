@@ -3,10 +3,10 @@ const validator=require('validator');
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
-  firstName: String,required:true, // String is shorthand for {type: String}
-  lastName: String,
+  firstName: { type: String, required: true },
+  lastName: { type: String },
   emailId: {
-    String,
+    type:String,
     lowercase: true,
      unique: true,
      trim: true,
@@ -26,7 +26,7 @@ const userSchema = new Schema({
         min:18,
     },
     gender: {
-        String,
+        type: String,
         validate(value){
             if(!["male","female","other"].includes(value)){
                 throw new Error("gender not valid");
@@ -34,7 +34,7 @@ const userSchema = new Schema({
         }
     },
     photoUrl: {
-        String,
+        type:String,
         default: "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-File.png",
         validate(value){
             if(!validator.isURL(value)){ //using validator library to validate url
@@ -42,9 +42,9 @@ const userSchema = new Schema({
             }
         }
     },
-    location: String,
-    about: String,
-    skills: [String],
+    location: { type: String },
+    about: { type: String },
+    skills: [String]
 },
   { timestamps: true }
 );
