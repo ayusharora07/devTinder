@@ -48,13 +48,17 @@ app.post("/login", async (req, res) => {
     if(!user){
       return res.status(400).send("invalid credentials");
     }
-    const isPasswordMatch=await bcrypt.compare(password,user.password); //compare the plain text password with the hashed password
+    const isPasswordMatch=await user.validatePassword(password); //validate the password using the method defined in the user model
     if(isPasswordMatch){
       //create a session or jwt token here for authentication
-      const token=jwt.sign({userId:user._id},"DEV@Tinder"); //create a jwt token with the user id as payload
+      const token=await user.getJWT(); //create a jwt token with the user id as payload
       //console.log(token);
       //sending a cookie
-      res.cookie("token",token); //in real world we will send a real token here
+      res.cookie("token",token, {
+        expires: new Date(Date.now() + 8 * 3600000), //cookie will expire in 8 hours
+        httpOnly: true, //cookie cannot be accessed by client side scripts
+        secure:true, //cookie will only be sent over https
+      });
       res.send("user logged in successfully");
       
     }else{

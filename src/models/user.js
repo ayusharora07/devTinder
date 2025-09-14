@@ -1,5 +1,7 @@
 const mongoose=require('mongoose');
 const validator=require('validator');
+const bcrypt = require('bcrypt'); //import bcrypt for hashing passwords
+const jwt=require('jsonwebtoken'); //import jsonwebtoken to create and verify jwt tokens
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
@@ -48,6 +50,19 @@ const userSchema = new Schema({
 },
   { timestamps: true }
 );
+userSchema.methods.getJWT = async function() {
+    const user = this;
+    const token = jwt.sign(
+        { userId: user._id },
+        "DEV@Tinder",
+        { expiresIn: "8h" }
+    );
+    return token;
+};
+userSchema.methods.validatePassword= async function(password){
+    const user=this;
+    return await bcrypt.compare(password,user.password); //compare the plain text password with the hashed password
+}
 
 //once schema is created we need to create a model
 const User=mongoose.model('User',userSchema); //it will create a collection named users in the database
