@@ -1,86 +1,22 @@
 const express = require('express');
 const connectDB = require('./config/database'); // Ensure the database is connected before handling requests
 const User = require('./models/user'); //import the user model
-const { validateSignUpData } = require('./utils/validation');
-const bcrypt = require('bcrypt'); //import bcrypt for hashing passwords
 const cookieParser = require('cookie-parser'); //import cookie-parser to parse cookies
-const jwt=require('jsonwebtoken'); //import jsonwebtoken to create and verify jwt tokens
-const { userAuth } = require('./middlewares/auth');//import the userAuth middleware for protected routes
-
 const app = express();
 app.use(express.json()); //middleware to parse json bodies
 app.use(cookieParser()); //middleware to parse cookies
 
+const authRouter = require('./routes/auth'); //import the auth routes
+app.use('/', authRouter); //use the auth routes with the prefix /auth
 
-app.post("/signup", async (req, res) => {
-  const user = new User(req.body); //create a new user instance using the User model
-  try {
-    validateSignUpData(req); //validate the data using the function from validation.js
-    const { firstName, lastName, emailId, password, age } = req.body;
-    //check if user with the same email id already exists
-    const existingUser = await User.findOne({ emailId });
-    if (existingUser) {
-      return res.status(400).send("user with this email already exists");
-    }
-    //hash the password before saving to the database
-    const passwordHash = await bcrypt.hash(req.body.password, 10); //hash the password with a salt round of 10
-    req.body.password = passwordHash; //replace the plain text password with the hashed password
-    const user=new  User({
-      firstName,
-      lastName,
-      emailId,
-      password:passwordHash,
-      age,
-    }); //create a new user instance using the User model
+const profileRouter = require('./routes/profile'); //import the profile routes
+app.use('/', profileRouter); //use the profile routes with the prefix /user
 
-    await user.save(); //save the user instance to the database 
-    //it returns a promise so use async await or .then() and .catch()
-    res.send("user signed up"); x
-  } catch (err) {
-    res.status(500).send("error signing up user" + err.message);
-  }
-});
-app.post("/login", async (req, res) => {
-  try{
-
-    const {emailId,password}=req.body;
-    const user=await User.findOne({emailId}); //find the user with the given email id
-    if(!user){
-      return res.status(400).send("invalid credentials");
-    }
-    const isPasswordMatch=await user.validatePassword(password); //validate the password using the method defined in the user model
-    if(isPasswordMatch){
-      //create a session or jwt token here for authentication
-      const token=await user.getJWT(); //create a jwt token with the user id as payload
-      //console.log(token);
-      //sending a cookie
-      res.cookie("token",token, {
-        expires: new Date(Date.now() + 8 * 3600000), //cookie will expire in 8 hours
-        httpOnly: true, //cookie cannot be accessed by client side scripts
-        secure:true, //cookie will only be sent over https
-      });
-      res.send("user logged in successfully");
-      
-    }else{
-      throw new Error ("invalid credentials");
-
-    }
-
-    
-  }catch(err){
-    res.status(500).send("error logging in user" + err.message);
-  }
-});
-app.get("/profile",userAuth,async(req,res)=>{
-  try{
-    const user=req.user;
-    res.send(user);
-  }catch(err){
-    res.status(500).send("error fetching profile"+err.message);
-  }
+const requestsRouter = require('./routes/requests'); //import the requests routes
+app.use('/', requestsRouter); //use the requests routes with the prefix /requests
 
 
-});
+
 //route to get only one user by email id
 app.get("/users", async (req, res) => {
   const userEmail = req.body.emailId;
