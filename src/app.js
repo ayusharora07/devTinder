@@ -3,9 +3,13 @@ const connectDB = require('./config/database'); // Ensure the database is connec
 const User = require('./models/user'); //import the user model
 const { validateSignUpData } = require('./utils/validation');
 const bcrypt = require('bcrypt'); //import bcrypt for hashing passwords
+const cookieParser = require('cookie-parser'); //import cookie-parser to parse cookies
+const jwt=require('jsonwebtoken'); //import jsonwebtoken to create and verify jwt tokens
+const { userAuth } = require('./middlewares/auth');//import the userAuth middleware for protected routes
 
 const app = express();
 app.use(express.json()); //middleware to parse json bodies
+app.use(cookieParser()); //middleware to parse cookies
 
 
 app.post("/signup", async (req, res) => {
@@ -45,13 +49,33 @@ app.post("/login", async (req, res) => {
       return res.status(400).send("invalid credentials");
     }
     const isPasswordMatch=await bcrypt.compare(password,user.password); //compare the plain text password with the hashed password
-    if(!isPasswordMatch){
-      return res.status(400).send("invalid credentials");
+    if(isPasswordMatch){
+      //create a session or jwt token here for authentication
+      const token=jwt.sign({userId:user._id},"DEV@Tinder"); //create a jwt token with the user id as payload
+      //console.log(token);
+      //sending a cookie
+      res.cookie("token",token); //in real world we will send a real token here
+      res.send("user logged in successfully");
+      
+    }else{
+      throw new Error ("invalid credentials");
+
     }
-    res.send("user logged in successfully");
+
+    
   }catch(err){
     res.status(500).send("error logging in user" + err.message);
   }
+});
+app.get("/profile",userAuth,async(req,res)=>{
+  try{
+    const user=req.user;
+    res.send(user);
+  }catch(err){
+    res.status(500).send("error fetching profile"+err.message);
+  }
+
+
 });
 //route to get only one user by email id
 app.get("/users", async (req, res) => {
