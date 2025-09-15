@@ -29,11 +29,15 @@ const userSchema = new Schema({
     },
     gender: {
         type: String,
-        validate(value){
-            if(!["male","female","other"].includes(value)){
-                throw new Error("gender not valid");
-            }
+        enum : {
+            values: ['male','female','others'],
+            message: `{VALUE} is not a correct gender type`,
         }
+        // validate(value){
+        //     if(!["male","female","other"].includes(value)){
+        //         throw new Error("gender not valid");
+        //     }
+        // }
     },
     photoUrl: {
         type:String,
@@ -50,6 +54,10 @@ const userSchema = new Schema({
 },
   { timestamps: true }
 );
+userSchema.index({
+    firstName: 1,
+    lastName: 1,
+});
 userSchema.methods.getJWT = async function() {
     const user = this;
     const token = jwt.sign(
