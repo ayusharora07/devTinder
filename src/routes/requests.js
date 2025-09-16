@@ -49,4 +49,45 @@ requestsRouter.post("/request/send/:status/:toUserId", userAuth, async (req, res
     }
 });
 
+requestsRouter.post("/request/respond/:status/:requestId", userAuth, async (req, res) => {
+    try {
+        const reviewerId = req.user._id;  //userAuth middleware se milta hai
+        const requestId = req.params.requestId; //sender of request
+        const status = req.params.status;
+
+        const allowedStatus = ['accepted', 'rejected'];
+        if (!allowedStatus.includes(status)) {
+            return res.status(400).send({ error: "Invalid status!" + status });
+        }
+        const connectionRequest = await ConnectionRequestModel.findOne({
+            _id: requestId,
+            toUserId: reviewerId,
+            status: 'interested' //only interested requests can be accepted or rejected
+    });
+        if (!connectionRequest) {
+            return res.status(404).send({ error: "Connection request not found" });
+        }
+        // Ensure that only the recipient can respond to the request
+        if (connectionRequest.toUserId.toString() !== reviewerId.toString()) {
+            return res.status(403).send({ error: "You are not authorized to respond to this request" });
+        }
+        // Update the status of the connection request
+        connectionRequest.status = status;
+        await connectionRequest.save();
+        // Re-fetch with populate (to show user info instead of just ObjectId) more good for client side rendering and frontend hass to not make another call to api to fetch these details
+        // Populate the fromUserId and toUserId fields with user details
+        const populatedRequest = await ConnectionRequestModel.findById(requestId)
+            .populate("fromUserId", "firstName lastName emailId photoUrl")  // show sender details
+            .populate("toUserId", "firstName lastName emailId photoUrl");  // show receiver details
+
+        res.json({
+            connectionRequest: populatedRequest,
+            message: `Connection request ${status} successfully`
+        });
+    }
+    catch (err) {
+        res.status(500).send("error responding to request" + err.message);
+    }
+});
+
 module.exports = requestsRouter;

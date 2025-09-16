@@ -8,7 +8,10 @@ const connectionRequestSchema = new mongoose.Schema({
         message: `Status can't be {VALUE}`,
         default: 'pending'
     }
-}, { timestamps: true });
+}, 
+{ 
+  timestamps: true 
+});
 
 // 🚨 Prevent self-request at schema level
 connectionRequestSchema.pre("save", function (next) {
