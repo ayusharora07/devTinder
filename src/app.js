@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser'); //import cookie-parser to parse c
 const app = express();
 app.use(express.json()); //middleware to parse json bodies
 app.use(cookieParser()); //middleware to parse cookies
-app.use(express.json()); //middleware to parse json bodies
 
 const authRouter = require('./routes/auth'); //import the auth routes
 app.use('/', authRouter); //use the auth routes with the prefix /auth
